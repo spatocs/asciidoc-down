@@ -1,0 +1,50 @@
+---
+meta-spec:
+  version: 1.4
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+name: Text-AsciidocDown
+version: 0.1.0
+abstract: Lightweight pure Perl AsciiDoc to Markdown converter
+author:
+  - 'Sandor Patocs'
+license: perl_5
+distribution_type: module
+requires:
+  perl: 5.016
+  Carp: 0
+  Cwd: 0
+  File::Basename: 0
+  File::Spec: 0
+  File::Temp: 0
+  Getopt::Long: 0
+  Pod::Usage: 0
+  version: 0.77
+build_requires:
+  Test::More: 0
+configure_requires:
+  ExtUtils::MakeMaker: 0
+resources:
+  repository:
+    type: git
+    url: https://github.com/spatocs/asciidoc-down.git
+    web: https://github.com/spatocs/asciidoc-down
+  bugtracker:
+    web: https://github.com/spatocs/asciidoc-down/issues
+  license:
+    - https://dev.perl.org/licenses/
+provides:
+  Text::AsciidocDown:
+    file: lib/Text/AsciidocDown.pm
+    version: 0.1.0
+  Text::AsciidocDown::Include:
+    file: lib/Text/AsciidocDown/Include.pm
+    version: 0.1.0
+  Text::AsciidocDown::Parser:
+    file: lib/Text/AsciidocDown/Parser.pm
+    version: 0.1.0
+  Text::AsciidocDown::Refs:
+    file: lib/Text/AsciidocDown/Refs.pm
+    version: 0.1.0
+  Text::AsciidocDown::Subs:
+    file: lib/Text/AsciidocDown/Subs.pm
+    version: 0.1.0

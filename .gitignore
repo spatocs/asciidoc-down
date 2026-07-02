@@ -1,0 +1,24 @@
+# Perl build and packaging artifacts
+/blib/
+/_build/
+/Makefile
+/Makefile.old
+/pm_to_blib
+/MYMETA.json
+/MYMETA.yml
+/*.tar.gz
+/*.zip
+/*.ppd
+
+# Disttest and release staging
+/Text-AsciidocDown-*/
+/MANIFEST.bak
+
+# Non-distribution planning/spec artifacts
+/docs/
+
+# Local temp files
+*~
+*.swp
+*.swo
+.DS_Store
