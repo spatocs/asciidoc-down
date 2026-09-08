@@ -3,7 +3,7 @@ package Text::AsciidocDown::Refs;
 use strict;
 use warnings;
 
-our $VERSION = '0.1.0';
+our $VERSION = '0.1.1';
 
 sub new_index {
   return {

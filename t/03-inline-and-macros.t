@@ -137,4 +137,72 @@ is(
   'curly apostrophe replacement'
 );
 
+# Standalone curly-quote/apostrophe markers.
+
+is(
+  conv("a `'s escape"),
+  "a \x{2019}s escape",
+  'standalone `\' marker resolves the reported round-trip bug'
+);
+
+is(
+  conv("it's fine"),
+  "it\x{2019}s fine",
+  'plain apostrophe form still works'
+);
+
+is(
+  conv("the `code`'s value"),
+  "the `code`'s value",
+  'regression guard: code span survives intact next to a plain apostrophe'
+);
+
+is(
+  conv("say '`quoted`' now"),
+  'say <q>quoted</q> now',
+  'paired single quote form does not regress'
+);
+
+is(
+  conv('say "`quoted`" now'),
+  'say <q>quoted</q> now',
+  'paired double quote form does not regress'
+);
+
+is(
+  conv("a `' b"),
+  "a \x{2019} b",
+  'lone closing single marker'
+);
+
+is(
+  conv("a '` b"),
+  "a \x{2018} b",
+  'lone opening single marker'
+);
+
+is(
+  conv('a `" b'),
+  "a \x{201D} b",
+  'lone closing double marker'
+);
+
+is(
+  conv('a "` b'),
+  "a \x{201C} b",
+  'lone opening double marker'
+);
+
+is(
+  conv("it's `code`'s and '`quoted`'"),
+  "it\x{2019}s `code`'s and <q>quoted</q>",
+  'plain, code span, and paired form all correct in one line'
+);
+
+is(
+  conv("open '` and close `' done"),
+  'open <q> and close </q> done',
+  'opposite markers on one line are a paired quote, not two standalone markers'
+);
+
 done_testing;

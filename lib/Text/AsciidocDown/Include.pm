@@ -3,7 +3,7 @@ package Text::AsciidocDown::Include;
 use strict;
 use warnings;
 
-our $VERSION = '0.1.0';
+our $VERSION = '0.1.1';
 
 use Cwd qw(abs_path getcwd);
 use File::Basename qw(dirname);

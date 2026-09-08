@@ -3,7 +3,7 @@ package Text::AsciidocDown::Subs;
 use strict;
 use warnings;
 
-our $VERSION = '0.1.0';
+our $VERSION = '0.1.1';
 
 my $ATTR_REF_RX = qr/(\\)?\{([a-z0-9_][a-z0-9_-]*)\}/i;
 my $INLINE_ANCHOR_RX = qr/\[\[([A-Za-z_][A-Za-z0-9_\-:.]*)\]\]/;
@@ -73,12 +73,32 @@ sub apply_inline_formatting {
   $text =~ s/$MONO_PASSTHRU_RX/_stash_mono(\@mono, $1)/ge;
   $text =~ s/$MONO_RX/_stash_mono(\@mono, $1)/ge;
 
+  # Standalone curly-quote/apostrophe markers (`', '`, `", "`) must be
+  # resolved here, after real code-span backticks have been stashed above
+  # and before they are restored below. apply_quotes() has already run
+  # (see apply_normal_subs) and consumed any genuine paired '`text`' or
+  # "`text`" forms, so any bare marker pair still present at this point is
+  # a true standalone marker and cannot be a code-span delimiter.
+  $text = apply_standalone_quote_markers($text);
+
   $text =~ s/$STRIKE_MARK_RX/_strikethrough($1, $attrs)/ge;
   $text =~ s/$MARK_RX/<mark>$1<\/mark>/g;
   $text =~ s/$BOLD_RX/*$1*/g;
   $text =~ s/$EMPH_RX/_$1_/g;
 
   $text =~ s/\x{1F}MONO(\d+)\x{1E}/'`' . $mono[$1] . '`'/ge;
+  return $text;
+}
+
+sub apply_standalone_quote_markers {
+  my ($text) = @_;
+  return '' unless defined $text;
+
+  $text =~ s/`'/\x{2019}/g;
+  $text =~ s/'`/\x{2018}/g;
+  $text =~ s/`"/\x{201D}/g;
+  $text =~ s/"`/\x{201C}/g;
+
   return $text;
 }
 
@@ -354,7 +374,8 @@ Applies the full normal substitution chain:
 
 =item * Apply AsciiDoc quotes (C<"`text`">)
 
-=item * Inline formatting (bold, emphasis, monospace, mark, strikethrough)
+=item * Inline formatting (bold, emphasis, monospace, mark, strikethrough,
+standalone curly-quote markers)
 
 =item * Attribute substitution
 

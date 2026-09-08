@@ -3,7 +3,7 @@ package Text::AsciidocDown::Parser;
 use strict;
 use warnings;
 
-our $VERSION = '0.1.0';
+our $VERSION = '0.1.1';
 
 use Text::AsciidocDown::Subs ();
 use Text::AsciidocDown::Refs ();
