@@ -5,7 +5,7 @@ use warnings;
 use Carp qw(croak);
 use version 0.77;
 
-our $VERSION = '0.1.1';
+our $VERSION = '0.1.2';
 
 use Text::AsciidocDown::Include ();
 use Text::AsciidocDown::Parser  ();

@@ -33,7 +33,7 @@ my $stdout    = `$stdin_cmd`;
 like($stdout, qr/^# T\n\nX\n\z/, 'stdin/stdout mode works');
 
 my $version = `$^X $script -v`;
-like($version, qr/^0\.1\.1\n\z/, 'version output works');
+like($version, qr/^\Q$Text::AsciidocDown::VERSION\E\n\z/, 'version output works');
 
 my $help = `$^X $script -h`;
 like($help, qr/^Usage: asciidoc-down /, 'help output works');

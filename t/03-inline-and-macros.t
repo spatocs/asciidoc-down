@@ -25,9 +25,36 @@ is(conv('#mark# and [.line-through]#gone#'), '<mark>mark</mark> and ~~gone~~', '
 is(conv(":markdown-strikethrough: <del> </del>\n\n[.line-through]#gone#\n"),
    '<del>gone</del>', 'strikethrough uses configurable mark pair');
 
-is(conv("say \"`quoted`\" then '`single`'"), 'say <q>quoted</q> then <q>single</q>', 'quote replacement with default quote pair');
+# Paired curly quotes default to real curly Unicode characters (not
+# downdoc's shared "<q></q>" HTML) so that a round trip through
+# Text::MarkdownAdoc is stable, and so that the single-quoted and
+# double-quoted forms remain distinguishable in the output. This is a
+# documented, verified deviation from downdoc's own default (downdoc uses
+# one "quotes" attribute for both forms, defaulting to "<q> </q>"); see
+# docs/COMPATIBILITY_REPORT.md.
+is(conv("say \"`quoted`\" then '`single`'"),
+   "say \x{201C}quoted\x{201D} then \x{2018}single\x{2019}",
+   'double- and single-quoted forms use distinct default curly characters');
 
-is(conv(":quotes: &ldquo; &rdquo;\n\n\"`hello`\"\n"), '&ldquo;hello&rdquo;', 'quote replacement can be configured');
+is(conv(":quotes: &ldquo; &rdquo;\n\n\"`hello`\"\n"), '&ldquo;hello&rdquo;', 'double quote replacement can be configured via quotes');
+
+is(conv(":quotes-single: &lsquo; &rsquo;\n\n'`hello`'\n"),
+   '&lsquo;hello&rsquo;', 'single quote replacement can be configured via quotes-single, independent of quotes');
+
+is(conv(":quotes: <q> </q>\n:quotes-single: <q> </q>\n\nsay \"`quoted`\" then '`single`' now\n"),
+   'say <q>quoted</q> then <q>single</q> now',
+   'both forms can still be configured to the old shared downdoc-parity <q></q> behavior');
+
+# A quoted span's content must be bounded by non-whitespace on both sides,
+# mirroring downdoc's QuotedSpanRx (`\S|\S.*?\S`). Whitespace-padded or
+# empty spans are not paired-quote matches; they fall through to the
+# standalone-marker mechanism instead, which still resolves the individual
+# open/close markers correctly.
+is(conv('say "` text `" now'),
+   "say \x{201C} text \x{201D} now",
+   'whitespace-padded double-quote span is not treated as a paired quote, but markers still resolve');
+
+is(conv('empty "``" pair'), "empty \x{201C}\x{201D} pair", 'empty double-quote span is not treated as a paired quote, but markers still resolve');
 
 is(conv('Visit https://example.org/docs[Docs] now.'), 'Visit [Docs](https://example.org/docs) now.', 'URL macro conversion');
 
@@ -87,9 +114,9 @@ is(conv("it's fine"), "it\x{2019}s fine", 'plain apostrophe form still works');
 
 is(conv("the `code`'s value"), "the `code`'s value", 'regression guard: code span survives intact next to a plain apostrophe');
 
-is(conv("say '`quoted`' now"), 'say <q>quoted</q> now', 'paired single quote form does not regress');
+is(conv("say '`quoted`' now"), "say \x{2018}quoted\x{2019} now", 'paired single quote form uses single-quote curly default');
 
-is(conv('say "`quoted`" now'), 'say <q>quoted</q> now', 'paired double quote form does not regress');
+is(conv('say "`quoted`" now'), "say \x{201C}quoted\x{201D} now", 'paired double quote form uses double-quote curly default');
 
 is(conv("a `' b"), "a \x{2019} b", 'lone closing single marker');
 
@@ -100,11 +127,77 @@ is(conv('a `" b'), "a \x{201D} b", 'lone closing double marker');
 is(conv('a "` b'), "a \x{201C} b", 'lone opening double marker');
 
 is(conv("it's `code`'s and '`quoted`'"),
-   "it\x{2019}s `code`'s and <q>quoted</q>",
+   "it\x{2019}s `code`'s and \x{2018}quoted\x{2019}",
    'plain, code span, and paired form all correct in one line');
 
 is(conv("open '` and close `' done"),
-   'open <q> and close </q> done',
+   "open \x{2018} and close \x{2019} done",
    'opposite markers on one line are a paired quote, not two standalone markers');
+
+# Verified against downdoc source (lib/index.js) that downdoc's single
+# "quotes" attribute governs BOTH paired forms identically (default
+# "<q> </q>"), so the two forms are indistinguishable in downdoc's own
+# output. That default is also not round-trip stable through
+# Text::MarkdownAdoc: raw "<q>" HTML is unknown to it and gets
+# progressively re-escaped as passthrough on every pass. This module
+# deliberately deviates from that default (real curly characters, one
+# attribute per form) to fix both problems at once, while still allowing
+# the old shared "<q></q>" behavior via explicit "quotes"/"quotes-single"
+# configuration (covered above).
+SKIP:
+{
+   eval { require Text::MarkdownAdoc };
+   skip('Text::MarkdownAdoc not installed; skipping round-trip stability check', 2) if $@;
+
+   my $up   = Text::MarkdownAdoc->new();
+   my $down = Text::AsciidocDown->new();
+
+   my $adoc  = q{say "`quoted`" then '`single`' now};
+   my $md1   = $down->convert($adoc);
+   my $adoc2 = $up->convert($md1);
+   my $md2   = $down->convert($adoc2);
+
+   is($md1, "say \x{201C}quoted\x{201D} then \x{2018}single\x{2019} now",
+      'round-trip: default curly-quote Markdown output matches expectation');
+   is($md2, $md1, 'round-trip: Markdown -> AsciiDoc -> Markdown reaches a stable fixpoint for paired quotes');
+}
+
+# Inline AsciiDoc passthrough (+++...+++) must survive completely
+# unprocessed: no "<" escaping, no quote/format substitution, no
+# attribute/macro expansion. Real AsciiDoc passthrough content is meant
+# to be emitted verbatim, but it was previously corrupted because nothing
+# recognized the "+++...+++" markers before escape_lt_outside_monospace()
+# ran, so it treated the content as ordinary text.
+is(conv('say +++<q>x</q>+++ now'), 'say <q>x</q> now', 'inline passthrough content survives verbatim, including "<"');
+
+is(conv('a +++*not bold*+++ b'), 'a *not bold* b', 'inline passthrough content is not subject to inline formatting');
+
+is(conv('a +++{not-an-attr}+++ b'), 'a {not-an-attr} b', 'inline passthrough content is not subject to attribute substitution');
+
+is(conv("a +++'`still passthrough`'+++ b"), "a '\x{60}still passthrough\x{60}' b", 'inline passthrough content is not subject to quote substitution');
+
+# This is what actually breaks without the fix: Text::MarkdownAdoc wraps
+# any HTML tag it does not recognize (such as the old shared "<q></q>"
+# downdoc-parity setting) as "+++<tag>+++...+++</tag>+++" passthrough on
+# the way back to AsciiDoc. Before this fix, the next Text::AsciidocDown
+# pass corrupted that passthrough by escaping its "<" to "&lt;", and the
+# corruption was permanent (a stable but wrong fixpoint), not merely
+# unstable. Verified end-to-end with the installed Text::MarkdownAdoc.
+SKIP:
+{
+   eval { require Text::MarkdownAdoc };
+   skip('Text::MarkdownAdoc not installed; skipping passthrough round-trip check', 2) if $@;
+
+   my $up   = Text::MarkdownAdoc->new();
+   my $down = Text::AsciidocDown->new(attributes => {quotes => '<q> </q>', 'quotes-single' => '<q> </q>'});
+
+   my $adoc  = q{say "`quoted`" now};
+   my $md1   = $down->convert($adoc);
+   my $adoc2 = $up->convert($md1);
+   my $md2   = $down->convert($adoc2);
+
+   is($md1, 'say <q>quoted</q> now', 'shared <q></q> downdoc-parity setting still works as configured');
+   is($md2, $md1, 'round-trip through the <q></q> setting reaches a correct, uncorrupted fixpoint (passthrough preserved)');
+}
 
 done_testing;
