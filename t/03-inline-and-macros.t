@@ -35,7 +35,8 @@ is(conv("say \"`quoted`\" then '`single`'"),
    "say \x{201C}quoted\x{201D} then \x{2018}single\x{2019}",
    'double- and single-quoted forms use distinct default curly characters');
 
-is(conv(":quotes: &ldquo; &rdquo;\n\n\"`hello`\"\n"), '&ldquo;hello&rdquo;', 'double quote replacement can be configured via quotes');
+is(conv(":quotes: &ldquo; &rdquo;\n\n\"`hello`\"\n"),
+   '&ldquo;hello&rdquo;', 'double quote replacement can be configured via quotes');
 
 is(conv(":quotes-single: &lsquo; &rsquo;\n\n'`hello`'\n"),
    '&lsquo;hello&rsquo;', 'single quote replacement can be configured via quotes-single, independent of quotes');
@@ -53,7 +54,9 @@ is(conv('say "` text `" now'),
    "say \x{201C} text \x{201D} now",
    'whitespace-padded double-quote span is not treated as a paired quote, but markers still resolve');
 
-is(conv('empty "``" pair'), "empty \x{201C}\x{201D} pair", 'empty double-quote span is not treated as a paired quote, but markers still resolve');
+is(conv('empty "``" pair'),
+   "empty \x{201C}\x{201D} pair",
+   'empty double-quote span is not treated as a paired quote, but markers still resolve');
 
 is(conv('Visit https://example.org/docs[Docs] now.'), 'Visit [Docs](https://example.org/docs) now.', 'URL macro conversion');
 
@@ -156,7 +159,8 @@ SKIP:
    my $adoc2 = $up->convert($md1);
    my $md2   = $down->convert($adoc2);
 
-   is($md1, "say \x{201C}quoted\x{201D} then \x{2018}single\x{2019} now",
+   is($md1,
+      "say \x{201C}quoted\x{201D} then \x{2018}single\x{2019} now",
       'round-trip: default curly-quote Markdown output matches expectation');
    is($md2, $md1, 'round-trip: Markdown -> AsciiDoc -> Markdown reaches a stable fixpoint for paired quotes');
 }
@@ -173,7 +177,9 @@ is(conv('a +++*not bold*+++ b'), 'a *not bold* b', 'inline passthrough content i
 
 is(conv('a +++{not-an-attr}+++ b'), 'a {not-an-attr} b', 'inline passthrough content is not subject to attribute substitution');
 
-is(conv("a +++'`still passthrough`'+++ b"), "a '\x{60}still passthrough\x{60}' b", 'inline passthrough content is not subject to quote substitution');
+is(conv("a +++'`still passthrough`'+++ b"),
+   "a '\x{60}still passthrough\x{60}' b",
+   'inline passthrough content is not subject to quote substitution');
 
 # This is what actually breaks without the fix: Text::MarkdownAdoc wraps
 # any HTML tag it does not recognize (such as the old shared "<q></q>"
