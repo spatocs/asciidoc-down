@@ -138,10 +138,9 @@ sub apply_quotes
    # Unicode characters. That default is what makes the round trip through
    # Text::MarkdownAdoc stable (it maps U+201C/201D and U+2018/2019 back to
    # these exact AsciiDoc forms); `<q></q>` never stabilises because it is
-   # unknown HTML that gets re-escaped as passthrough on every pass. See
-   # docs/COMPATIBILITY_REPORT.md for the full rationale and the downdoc
-   # parity note. Callers who want the old shared `<q></q>` behavior can
-   # still get it by setting both `quotes` and `quotes-single` explicitly.
+   # unknown HTML that gets re-escaped as passthrough on every pass.
+   # Callers who want the old shared `<q></q>` behavior can still get it
+   # by setting both `quotes` and `quotes-single` explicitly.
    my ($dq_open, $dq_close) = _quote_pair($attrs->{quotes},          "\x{201C}", "\x{201D}");
    my ($sq_open, $sq_close) = _quote_pair($attrs->{'quotes-single'}, "\x{2018}", "\x{2019}");
 

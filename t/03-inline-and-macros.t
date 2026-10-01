@@ -30,8 +30,7 @@ is(conv(":markdown-strikethrough: <del> </del>\n\n[.line-through]#gone#\n"),
 # Text::MarkdownAdoc is stable, and so that the single-quoted and
 # double-quoted forms remain distinguishable in the output. This is a
 # documented, verified deviation from downdoc's own default (downdoc uses
-# one "quotes" attribute for both forms, defaulting to "<q> </q>"); see
-# docs/COMPATIBILITY_REPORT.md.
+# one "quotes" attribute for both forms, defaulting to "<q> </q>").
 is(conv("say \"`quoted`\" then '`single`'"),
    "say \x{201C}quoted\x{201D} then \x{2018}single\x{2019}",
    'double- and single-quoted forms use distinct default curly characters');
